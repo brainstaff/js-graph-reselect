@@ -1,0 +1,26 @@
+{
+  "name": "@brainstaff/graph-reselect",
+  "version": "1.0.0",
+  "description": "This library enables graph-like queries for Redux-Reselect-Immutable environment.",
+  "main": "dist/index.js",
+  "repository": "https://github.com/brainstaff/js-graph-reselect",
+  "author": "Alexey Kornilov <alexey.kornilov@kavolorn.ru>",
+  "license": "MIT",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "rollup -c rollup.config.js"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-flow": "^6.23.0",
+    "flow-bin": "^0.76.0",
+    "immutable": "^3.8.2",
+    "reselect": "^3.0.1",
+    "rollup": "^0.63.2",
+    "rollup-plugin-babel": "^3.0.7"
+  },
+  "peerDependencies": {
+    "immutable": "^3.8.0",
+    "reselect": "^3.0.0"
+  }
+}
