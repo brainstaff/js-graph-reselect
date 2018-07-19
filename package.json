@@ -11,6 +11,16 @@
     "build": "rollup -c rollup.config.js"
   },
   "devDependencies": {
-    "rollup": "^0.63.2"
+    "babel-core": "^6.26.3",
+    "babel-preset-flow": "^6.23.0",
+    "flow-bin": "^0.76.0",
+    "immutable": "^3.8.2",
+    "reselect": "^3.0.1",
+    "rollup": "^0.63.2",
+    "rollup-plugin-babel": "^3.0.7"
+  },
+  "peerDependencies": {
+    "immutable": "^3.8.0",
+    "reselect": "^3.0.0"
   }
 }
