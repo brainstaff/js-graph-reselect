@@ -1,6 +1,6 @@
 import { fromJS, Map } from 'immutable';
 import { expect } from 'chai';
-import {generateGraphSelector} from '../src';
+import {generateGraphSelector} from '../dist';
 
 let state = new Map({
   users: Map({

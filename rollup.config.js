@@ -9,7 +9,19 @@ export default {
     globals: ['reselect', 'immutable']
   },
   plugins: [
-    babel()
+    babel({
+      babelrc: false,
+      exclude: 'node_modules/**',
+      presets: [
+        "flow",
+        [
+          "env",
+          {
+            modules: false
+          }
+        ]
+      ]
+    })
   ],
   external: [
     'reselect',
