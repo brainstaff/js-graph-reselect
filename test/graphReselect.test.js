@@ -20,6 +20,12 @@ const users = [
   { _id: 'u2', name: 'User2', contacts: ['c2'] }
 ];
 
+const events = [
+  { _id: 'e1', user_id: 'u1' },
+  { _id: 'e2', user_id: 'u2' },
+  { _id: 'e3', user_id: 'u2' }
+];
+
 const contacts = [
   { _id: 'c1', name: 'Contact 1', phones: ['p2'] },
   { _id: 'c2', name: 'Contact 2', phones: ['p1', 'p3'] },
@@ -36,7 +42,8 @@ const phones = [
 state = state
   .mergeIn(['users', 'entities'], fromJS(users.map(user => [user._id, user])))
   .mergeIn(['contacts', 'entities'], fromJS(contacts.map(contact => [contact._id, contact])))
-  .mergeIn(['phones', 'entities'], fromJS(phones.map(phone => [phone._id, phone])));
+  .mergeIn(['phones', 'entities'], fromJS(phones.map(phone => [phone._id, phone])))
+  .mergeIn(['events', 'entities'], fromJS(events.map(event => [event._id, event])));
 
 describe('Graph reselect', () => {
   describe('querying', () => {
@@ -94,7 +101,47 @@ describe('Graph reselect', () => {
       ]);
 
       expect(users.equals(usersToCompare)).to.be.true;
-    })
+    });
+
+    it('should query in reverse manner', () => {
+      const query = {
+        type: 'array',
+        getIn: ['users', 'entities'],
+        filter: {},
+        map: {
+          events: {
+            type: 'array',
+            getIn: ['events', 'entities'],
+            map: {},
+            filter: {},
+            localField: '_id',
+            foreignField: 'user_id'
+          }
+        }
+      };
+
+      const usersSelector = generateGraphSelector(query, {});
+      const users = usersSelector(state);
+
+      const usersToCompare = fromJS([{
+        _id: 'u1',
+        name: 'User1',
+        contacts: ['c1', 'c3'],
+        events: [
+          { _id: 'e1', user_id: 'u1' }
+        ]
+      }, {
+        _id: 'u2',
+        name: 'User2',
+        contacts: ['c2'],
+        events: [
+          { _id: 'e2', user_id: 'u2' },
+          { _id: 'e3', user_id: 'u2' }
+        ]
+      }]);
+
+      expect(users.equals(usersToCompare)).to.be.true;
+    });
   });
 
   describe('filtering', () => {
