@@ -12,7 +12,9 @@ type Query = {
   },
   map: {
     [string]: Query | true
-  }
+  },
+  localField: ?string,
+  foreignField: ?string
 }
 
 type Filter = ValueFilter | ParamFilter | ArrayFilter;
@@ -116,6 +118,8 @@ export const generateGraphSelectorCreator = (query: Query) => {
               } else {
                 checks.push(params.links === item.get('_id'));
               }
+            } else if (params.link && params.foreignField) {
+              checks.push(item.get(params.foreignField) === params.link)
             }
             return !checks.some(check => check === false);
           })
@@ -141,8 +145,18 @@ export const generateGraphSelectorCreator = (query: Query) => {
             }
             // Links to other entities
             Object.keys(queryMap).forEach((key) => {
-              if (typeof queryMap[key] === 'object') {
-                const newParams = Object.assign({}, params, { links: item.get(key) });
+              const mapItem = queryMap[key];
+              if (typeof mapItem === 'object') {
+                const newParams = Object.assign({}, params);
+                if (item.has(key)) {
+                  Object.assign(newParams, { links: item.get(key) });
+                } else if ('localField' in mapItem && 'foreignField' in mapItem) {
+                  Object.assign(newParams, {
+                    link: item.get(mapItem.localField),
+                    foreignField: mapItem.foreignField
+                  })
+                }
+
                 result = result.set(key, childrenSelectors[key](newParams)(state));
               }
             });
