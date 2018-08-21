@@ -1,6 +1,6 @@
 {
   "name": "@brainstaff/graph-reselect",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "description": "This library enables graph-like queries for Redux-Reselect-Immutable environment.",
   "main": "dist/index.js",
   "repository": "https://github.com/brainstaff/js-graph-reselect",
