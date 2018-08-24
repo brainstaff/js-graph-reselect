@@ -9,7 +9,7 @@ import {
   addresses,
   usersHasContactsHasPhones,
   usersHasEventsAndContactsHasAddresses, usersWithNameUser1, usersWithIdU2, contactsWithIdsC1AndC3
-} from '../src/data';
+} from './data';
 
 let state = new Map({
   users: Map({
