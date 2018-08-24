@@ -62,6 +62,7 @@ describe('Graph reselect', () => {
   });
 
   describe('filtering', () => {
+
     it('should query with filter of type "lookup"', () => {
       const query = {
         type: 'array',
@@ -72,7 +73,8 @@ describe('Graph reselect', () => {
             type: 'array',
             getIn: ['events', 'entities'],
             filter: {
-              user_id: { type: "lookup", foreignField: "_id" }
+              user_id: { type: "lookup", foreignField: "_id" },
+              _id: { type: 'inArray', param: 'eventsIds' }
             },
             map: {}
           },
@@ -94,7 +96,7 @@ describe('Graph reselect', () => {
         }
       };
 
-      const usersSelector = generateGraphSelector(query, { e1: 'e1' });
+      const usersSelector = generateGraphSelector(query, { eventsIds: [ 'e1', 'e3' ] });
       const users = usersSelector(state);
 
       const usersToCompare = fromJS(usersHasEventsAndContactsHasAddresses);

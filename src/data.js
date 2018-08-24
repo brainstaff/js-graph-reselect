@@ -105,7 +105,6 @@ export const usersHasEventsAndContactsHasAddresses = [
       }
     ],
     events: [
-      { _id: 'e2', user_id: 'u2' },
       { _id: 'e3', user_id: 'u2' }
     ]
   }
