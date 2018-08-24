@@ -71,30 +71,30 @@ describe('Graph reselect', () => {
           events: {
             type: 'array',
             getIn: ['events', 'entities'],
-            map: {},
             filter: {
               user_id: { type: "lookup", foreignField: "_id" }
-            }
+            },
+            map: {}
           },
           contacts: {
             type: 'array',
             getIn: ['contacts', 'entities'],
+            filter: {},
             map: {
               addresses: {
                 type: 'array',
                 getIn: ['addresses', 'entities'],
-                map: {},
                 filter: {
                   contact_id: { type: 'lookup', foreignField: '_id' }
-                }
+                },
+                map: {}
               }
-            },
-            filter: {}
+            }
           }
         }
       };
 
-      const usersSelector = generateGraphSelector(query, {});
+      const usersSelector = generateGraphSelector(query, { e1: 'e1' });
       const users = usersSelector(state);
 
       const usersToCompare = fromJS(usersHasEventsAndContactsHasAddresses);

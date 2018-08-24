@@ -151,14 +151,15 @@ export const generateGraphSelectorCreator = (query: Query) => {
             Object.keys(queryMap).forEach((key) => {
               const mapItem = queryMap[key];
               if (typeof mapItem === 'object') {
-                Object.assign(params, { parentItem: item })
+                const newParams = Object.assign({}, params, { parentItem: item });
+
                 if (item.has(key)) {
-                  Object.assign(params, { links: item.get(key) });
-                } else {
-                  delete params.links;
+                  Object.assign(newParams, { links: item.get(key) });
+                } else if ('links' in newParams) {
+                  delete newParams.links;
                 }
 
-                result = result.set(key, childrenSelectors[key](params)(state));
+                result = result.set(key, childrenSelectors[key](newParams)(state));
               }
             });
             return result;
