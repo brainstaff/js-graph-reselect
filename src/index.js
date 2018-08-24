@@ -12,12 +12,10 @@ type Query = {
   },
   map: {
     [string]: Query | true
-  },
-  localField: ?string,
-  foreignField: ?string
+  }
 }
 
-type Filter = ValueFilter | ParamFilter | ArrayFilter;
+type Filter = ValueFilter | ParamFilter | ArrayFilter | LookupFilter;
 
 type ValueFilter = {
   type: 'value',
@@ -32,6 +30,11 @@ type ParamFilter = {
 type ArrayFilter = {
   type: 'inArray',
   param: Array<any>
+};
+
+type LookupFilter = {
+  type: 'lookup',
+  foreignField: string
 };
 
 // Selector generator
@@ -110,6 +113,9 @@ export const generateGraphSelectorCreator = (query: Query) => {
               if (filter.type === 'value') {
                 return item.get(key) === filter.value;
               }
+              if (filter.type === 'lookup') {
+                return item.get(key) === params.parentItem.get(filter.foreignField);
+              }
               return false;
             });
             if (params.links) {
@@ -118,8 +124,6 @@ export const generateGraphSelectorCreator = (query: Query) => {
               } else {
                 checks.push(params.links === item.get('_id'));
               }
-            } else if (params.link && params.foreignField) {
-              checks.push(item.get(params.foreignField) === params.link)
             }
             return !checks.some(check => check === false);
           })
@@ -147,14 +151,12 @@ export const generateGraphSelectorCreator = (query: Query) => {
             Object.keys(queryMap).forEach((key) => {
               const mapItem = queryMap[key];
               if (typeof mapItem === 'object') {
-                const newParams = Object.assign({}, params);
+                const newParams = Object.assign({}, params, { parentItem: item });
+
                 if (item.has(key)) {
                   Object.assign(newParams, { links: item.get(key) });
-                } else if ('localField' in mapItem && 'foreignField' in mapItem) {
-                  Object.assign(newParams, {
-                    link: item.get(mapItem.localField),
-                    foreignField: mapItem.foreignField
-                  })
+                } else if ('links' in newParams) {
+                  delete newParams.links;
                 }
 
                 result = result.set(key, childrenSelectors[key](newParams)(state));

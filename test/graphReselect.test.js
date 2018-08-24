@@ -1,6 +1,15 @@
 import { fromJS, Map } from 'immutable';
 import { expect } from 'chai';
 import {generateGraphSelector} from '../dist';
+import {
+  users,
+  contacts,
+  phones,
+  events,
+  addresses,
+  usersHasContactsHasPhones,
+  usersHasEventsAndContactsHasAddresses, usersWithNameUser1, usersWithIdU2, contactsWithIdsC1AndC3
+} from './data';
 
 let state = new Map({
   users: Map({
@@ -15,35 +24,12 @@ let state = new Map({
 });
 
 
-const users = [
-  { _id: 'u1', name: 'User1', contacts: [ 'c1', 'c3' ] },
-  { _id: 'u2', name: 'User2', contacts: ['c2'] }
-];
-
-const events = [
-  { _id: 'e1', user_id: 'u1' },
-  { _id: 'e2', user_id: 'u2' },
-  { _id: 'e3', user_id: 'u2' }
-];
-
-const contacts = [
-  { _id: 'c1', name: 'Contact 1', phones: ['p2'] },
-  { _id: 'c2', name: 'Contact 2', phones: ['p1', 'p3'] },
-  { _id: 'c3', name: 'Contact 3', phones: ['p4'] }
-];
-
-const phones = [
-  { _id: 'p1', name: 'Phone 1' },
-  { _id: 'p2', name: 'Phone 2' },
-  { _id: 'p3', name: 'Phone 3' },
-  { _id: 'p4', name: 'Phone 4' },
-];
-
 state = state
   .mergeIn(['users', 'entities'], fromJS(users.map(user => [user._id, user])))
   .mergeIn(['contacts', 'entities'], fromJS(contacts.map(contact => [contact._id, contact])))
   .mergeIn(['phones', 'entities'], fromJS(phones.map(phone => [phone._id, phone])))
-  .mergeIn(['events', 'entities'], fromJS(events.map(event => [event._id, event])));
+  .mergeIn(['events', 'entities'], fromJS(events.map(event => [event._id, event])))
+  .mergeIn(['addresses', 'entities'], fromJS(addresses.map(address => [address._id, address])));
 
 describe('Graph reselect', () => {
   describe('querying', () => {
@@ -69,41 +55,15 @@ describe('Graph reselect', () => {
 
       const usersSelector = generateGraphSelector(query, {});
       const users = usersSelector(state);
-      const usersToCompare = fromJS([
-        {
-          _id: 'u1', name: 'User1', contacts: [
-            {
-              _id: 'c1', name: 'Contact 1', phones: [
-                { _id: 'p2', name: 'Phone 2' }
-              ]
-            },
-            {
-              _id: 'c3', name: 'Contact 3', phones: [
-                { _id: 'p4', name: 'Phone 4' }
-              ]
-            }
-          ]
-        },
-        {
-          _id: 'u2', name: 'User2', contacts: [
-            {
-              _id: 'c2', name: 'Contact 2', phones: [
-                {
-                  _id: 'p1', name: 'Phone 1'
-                },
-                {
-                  _id: 'p3', name: 'Phone 3'
-                }
-              ]
-            }
-          ]
-        }
-      ]);
+      const usersToCompare = fromJS(usersHasContactsHasPhones);
 
       expect(users.equals(usersToCompare)).to.be.true;
     });
+  });
 
-    it('should query in reverse manner', () => {
+  describe('filtering', () => {
+
+    it('should query with filter of type "lookup"', () => {
       const query = {
         type: 'array',
         getIn: ['users', 'entities'],
@@ -112,39 +72,38 @@ describe('Graph reselect', () => {
           events: {
             type: 'array',
             getIn: ['events', 'entities'],
-            map: {},
+            filter: {
+              user_id: { type: "lookup", foreignField: "_id" },
+              _id: { type: 'inArray', param: 'eventsIds' }
+            },
+            map: {}
+          },
+          contacts: {
+            type: 'array',
+            getIn: ['contacts', 'entities'],
             filter: {},
-            localField: '_id',
-            foreignField: 'user_id'
+            map: {
+              addresses: {
+                type: 'array',
+                getIn: ['addresses', 'entities'],
+                filter: {
+                  contact_id: { type: 'lookup', foreignField: '_id' }
+                },
+                map: {}
+              }
+            }
           }
         }
       };
 
-      const usersSelector = generateGraphSelector(query, {});
+      const usersSelector = generateGraphSelector(query, { eventsIds: [ 'e1', 'e3' ] });
       const users = usersSelector(state);
 
-      const usersToCompare = fromJS([{
-        _id: 'u1',
-        name: 'User1',
-        contacts: ['c1', 'c3'],
-        events: [
-          { _id: 'e1', user_id: 'u1' }
-        ]
-      }, {
-        _id: 'u2',
-        name: 'User2',
-        contacts: ['c2'],
-        events: [
-          { _id: 'e2', user_id: 'u2' },
-          { _id: 'e3', user_id: 'u2' }
-        ]
-      }]);
+      const usersToCompare = fromJS(usersHasEventsAndContactsHasAddresses);
 
       expect(users.equals(usersToCompare)).to.be.true;
     });
-  });
 
-  describe('filtering', () => {
     it('should query with filter of type "value"', () => {
       const query = {
         type: 'array',
@@ -157,9 +116,7 @@ describe('Graph reselect', () => {
 
       const usersSelector = generateGraphSelector(query, {});
       const users = usersSelector(state);
-      const usersToCompare = fromJS([
-        { _id: 'u1', name: 'User1', contacts: [ 'c1', 'c3' ] }
-      ]);
+      const usersToCompare = fromJS(usersWithNameUser1);
 
       expect(users.equals(usersToCompare)).to.be.true;
     });
@@ -174,11 +131,9 @@ describe('Graph reselect', () => {
         map: {}
       };
 
-      const usersSelector = generateGraphSelector(query, { userId: 'u1' });
+      const usersSelector = generateGraphSelector(query, { userId: 'u2' });
       const users = usersSelector(state);
-      const usersToCompare = fromJS([
-        { _id: 'u1', name: 'User1', contacts: [ 'c1', 'c3' ] }
-      ]);
+      const usersToCompare = fromJS(usersWithIdU2);
 
       expect(users.equals(usersToCompare)).to.be.true;
     });
@@ -195,10 +150,7 @@ describe('Graph reselect', () => {
 
       const contactsSelector = generateGraphSelector(query, { contactIds: ['c1', 'c3'] });
       const contacts = contactsSelector(state);
-      const contactsToCompare = fromJS([
-        { _id: 'c1', name: 'Contact 1', phones: ['p2'] },
-        { _id: 'c3', name: 'Contact 3', phones: ['p4'] }
-      ]);
+      const contactsToCompare = fromJS(contactsWithIdsC1AndC3);
 
       expect(contacts.equals(contactsToCompare)).to.be.true;
     });
